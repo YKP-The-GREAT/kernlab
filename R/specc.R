@@ -3,28 +3,28 @@
 
 setGeneric("specc",function(x, ...) standardGeneric("specc"))
 setMethod("specc", signature(x = "formula"),
-function(x, data = NULL, na.action = na.omit, ...)
-{
-    mt <- terms(x, data = data)
-    if(attr(mt, "response") > 0) stop("response not allowed in formula")
-    attr(mt, "intercept") <- 0
-    cl <- match.call()
-    mf <- match.call(expand.dots = FALSE)
-    mf$formula <- mf$x
-    mf$... <- NULL
-    mf[[1L]] <- quote(stats::model.frame)
-    mf <- eval(mf, parent.frame())
-    na.act <- attr(mf, "na.action")
-    x <- model.matrix(mt, mf)
-    res <- specc(x, ...)
-   
-    cl[[1]] <- as.name("specc")
-     if(!is.null(na.act)) 
-        n.action(res) <- na.action
-    
-   
-    return(res)
-  })
+          function(x, data = NULL, na.action = na.omit, ...)
+          {
+            mt <- terms(x, data = data)
+            if(attr(mt, "response") > 0) stop("response not allowed in formula")
+            attr(mt, "intercept") <- 0
+            cl <- match.call()
+            mf <- match.call(expand.dots = FALSE)
+            mf$formula <- mf$x
+            mf$... <- NULL
+            mf[[1L]] <- quote(stats::model.frame)
+            mf <- eval(mf, parent.frame())
+            na.act <- attr(mf, "na.action")
+            x <- model.matrix(mt, mf)
+            res <- specc(x, ...)
+            
+            cl[[1]] <- as.name("specc")
+            if(!is.null(na.act)) 
+              n.action(res) <- na.action
+            
+            
+            return(res)
+          })
 
 setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", kpar = "automatic", nystrom.red = FALSE, nystrom.sample = dim(x)[1]/6, iterations = 200, mod.sample =  0.75, na.action = na.omit, ...)
 {
@@ -41,114 +41,117 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
   }
   else
     nc <- dim(centers)[2]
-
+  
   
   if(is.character(kpar)) {
     kpar <- match.arg(kpar,c("automatic","local"))
-   
+    
     if(kpar == "automatic")
-      {
-        if (nystrom.red == TRUE)
-          sam <- sample(1:m, floor(mod.sample*nystrom.sample))
-        else
-          sam <- sample(1:m, floor(mod.sample*m))
-
-        sx <- unique(x[sam,])
-        ns <- dim(sx)[1]
-        dota <- rowSums(sx*sx)/2
-        ktmp <- crossprod(t(sx))
-        for (i in 1:ns)
-          ktmp[i,]<- 2*(-ktmp[i,] + dota + rep(dota[i], ns))
-
-  
-        ## fix numerical prob.
-        ktmp[ktmp<0] <- 0
-        ktmp <- sqrt(ktmp)
+    {
+      if (nystrom.red == TRUE)
+        sam <- sample(1:m, floor(mod.sample*nystrom.sample))
+      else
+        sam <- sample(1:m, floor(mod.sample*m))
+      
+      sx <- unique(x[sam,])
+      ns <- dim(sx)[1]
+      dota <- rowSums(sx*sx)/2
+      ktmp <- crossprod(t(sx))
+      for (i in 1:ns)
+        ktmp[i,]<- 2*(-ktmp[i,] + dota + rep(dota[i], ns))
+      
+      
+      ## fix numerical prob.
+      ktmp[ktmp<0] <- 0
+      ktmp <- sqrt(ktmp)
+      
+      kmax <- max(ktmp)
+      kmin <- min(ktmp + diag(rep(Inf,dim(ktmp)[1])))
+      kmea <- mean(ktmp)
+      lsmin <- log2(kmin)
+      lsmax <- log2(kmax)
+      midmax <- min(c(2*kmea, kmax))
+      midmin <- max(c(kmea/2,kmin))
+      rtmp <- c(seq(midmin,0.9*kmea,0.05*kmea), seq(kmea,midmax,0.08*kmea))
+      if ((lsmax - (Re(log2(midmax))+0.5)) < 0.5) step <- (lsmax - (Re(log2(midmax))+0.5))
+      else step <- 0.5
+      if (((Re(log2(midmin))-0.5)-lsmin) < 0.5 ) stepm <-  ((Re(log2(midmin))-0.5) - lsmin)
+      else stepm <- 0.5
+      
+      tmpsig <- c(2^(seq(lsmin,(Re(log2(midmin))-0.5), stepm)), rtmp, 2^(seq(Re(log2(midmax))+0.5, lsmax,step)))
+      diss <- matrix(rep(Inf,length(tmpsig)*nc),ncol=nc)
+      
+      for (i in 1:length(tmpsig)){
+        ka <- exp((-(ktmp^2))/(2*(tmpsig[i]^2)))
+        diag(ka) <- 0
         
-        kmax <- max(ktmp)
-        kmin <- min(ktmp + diag(rep(Inf,dim(ktmp)[1])))
-        kmea <- mean(ktmp)
-        lsmin <- log2(kmin)
-        lsmax <- log2(kmax)
-        midmax <- min(c(2*kmea, kmax))
-        midmin <- max(c(kmea/2,kmin))
-        rtmp <- c(seq(midmin,0.9*kmea,0.05*kmea), seq(kmea,midmax,0.08*kmea))
-        if ((lsmax - (Re(log2(midmax))+0.5)) < 0.5) step <- (lsmax - (Re(log2(midmax))+0.5))
-        else step <- 0.5
-        if (((Re(log2(midmin))-0.5)-lsmin) < 0.5 ) stepm <-  ((Re(log2(midmin))-0.5) - lsmin)
-        else stepm <- 0.5
+        d <- 1/sqrt(rowSums(ka))
         
-        tmpsig <- c(2^(seq(lsmin,(Re(log2(midmin))-0.5), stepm)), rtmp, 2^(seq(Re(log2(midmax))+0.5, lsmax,step)))
-        diss <- matrix(rep(Inf,length(tmpsig)*nc),ncol=nc)
-
-        for (i in 1:length(tmpsig)){
-          ka <- exp((-(ktmp^2))/(2*(tmpsig[i]^2)))
-          diag(ka) <- 0
-          
-          d <- 1/sqrt(rowSums(ka))
-     
-          if(!any(d==Inf) && !any(is.na(d))&& (max(d)[1]-min(d)[1] < 10^4))
-            {
-              l <- d * ka %*% diag(d)
-              xi <- eigen(l,symmetric=TRUE)$vectors[,1:nc]
-              yi <- xi/sqrt(rowSums(xi^2))
-              res <- kmeans(yi, centers, iterations)
-              diss[i,] <- res$withinss
-            }
+        if(!any(d==Inf) && !any(is.na(d))&& (max(d)[1]-min(d)[1] < 10^4))
+        {
+          l <- d * ka %*% diag(d)
+          cat('l <- d * ka %*% diag(d) \n l: ', l)
+          xi <- eigen(l,symmetric=TRUE)$vectors[,1:nc]
+          cat(' xi <- eigen(l,symmetric=TRUE)$vectors[,1:nc] \n xi: ', xi)
+          yi <- xi/sqrt(rowSums(xi^2))
+          cat('yi <- xi/sqrt(rowSums(xi^2)) \n yi: ', yi)
+          res <- kmeans(yi, centers, iterations)
+          diss[i,] <- res$withinss
         }
-
-        ms <- which.min(rowSums(diss))
-        kernel <- rbfdot((tmpsig[ms]^(-2))/2)
-
-        ## Compute Affinity Matrix
-        if (nystrom.red == FALSE)
-          km <- kernelMatrix(kernel, x)
       }
+      
+      ms <- which.min(rowSums(diss))
+      kernel <- rbfdot((tmpsig[ms]^(-2))/2)
+      
+      ## Compute Affinity Matrix
+      if (nystrom.red == FALSE)
+        km <- kernelMatrix(kernel, x)
+    }
     if (kpar=="local")
-      {
-        if (nystrom.red == TRUE)
-          stop ("Local Scaling not supported for nystrom reduction.")
-        s <- rep(0,m)
-        dota <- rowSums(x*x)/2
-        dis <- crossprod(t(x))
-        for (i in 1:m)
-          dis[i,]<- 2*(-dis[i,] + dota + rep(dota[i],m))
-        
-        ## fix numerical prob.
-        dis[dis < 0] <- 0
-        
-        for (i in 1:m)
-          s[i] <- median(sort(sqrt(dis[i,]))[1:5])
-        
-        ## Compute Affinity Matrix
-        km <- exp(-dis / s%*%t(s))
-        kernel <- "Localy scaled RBF kernel"
-
-
-      }
+    {
+      if (nystrom.red == TRUE)
+        stop ("Local Scaling not supported for nystrom reduction.")
+      s <- rep(0,m)
+      dota <- rowSums(x*x)/2
+      dis <- crossprod(t(x))
+      for (i in 1:m)
+        dis[i,]<- 2*(-dis[i,] + dota + rep(dota[i],m))
+      
+      ## fix numerical prob.
+      dis[dis < 0] <- 0
+      
+      for (i in 1:m)
+        s[i] <- median(sort(sqrt(dis[i,]))[1:5])
+      
+      ## Compute Affinity Matrix
+      km <- exp(-dis / s%*%t(s))
+      kernel <- "Localy scaled RBF kernel"
+      
+      
+    }
   }
-    else 
-      {
-        if(!is(kernel,"kernel"))
-          {
-            if(is(kernel,"function")) kernel <- deparse(substitute(kernel))
-            kernel <- do.call(kernel, kpar)
-          }
-        if(!is(kernel,"kernel")) stop("kernel must inherit from class `kernel'")
-
-        ## Compute Affinity Matrix
-        if (nystrom.red == FALSE)
-          km <- kernelMatrix(kernel, x)
-      }
-
-   
-     
+  else 
+  {
+    if(!is(kernel,"kernel"))
+    {
+      if(is(kernel,"function")) kernel <- deparse(substitute(kernel))
+      kernel <- do.call(kernel, kpar)
+    }
+    if(!is(kernel,"kernel")) stop("kernel must inherit from class `kernel'")
+    
+    ## Compute Affinity Matrix
+    if (nystrom.red == FALSE)
+      km <- kernelMatrix(kernel, x)
+  }
+  
+  
+  
   if (nystrom.red == TRUE){
-
+    
     n <- floor(nystrom.sample)
     ind <- sample(1:m, m)
     x <- x[ind,]
-
+    
     tmps <- sort(ind, index.return = TRUE)
     reind <- tmps$ix
     A <- kernelMatrix(kernel, x[1:n,])
@@ -156,10 +159,10 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
     d1 <- colSums(rbind(A,B))
     d2 <- rowSums(B) + drop(matrix(colSums(B),1) %*% .ginv(A)%*%t(B))
     dhat <- sqrt(1/c(d1,d2))
- 
+    
     A <- A * (dhat[1:n] %*% t(dhat[1:n]))
     B <- B * (dhat[(n+1):m] %*% t(dhat[1:n]))
-
+    
     Asi <- .sqrtm(.ginv(A))
     Q <- A + Asi %*% crossprod(B) %*% Asi
     tmpres <- svd(Q)
@@ -167,13 +170,16 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
     L <- tmpres$d
     V <- rbind(A,B) %*% Asi %*% U %*% .ginv(sqrt(diag(L)))
     yi <- matrix(0,m,nc)
-
-   ## for(i in 2:(nc +1))
-   ##   yi[,i-1] <- V[,i]/V[,1]
-
+    cat(' yi <- matrix(0,m,nc) \n: ', yi)
+    ## for(i in 2:(nc +1))
+    ##   yi[,i-1] <- V[,i]/V[,1]
+    
     for(i in 1:nc) ## specc
       yi[,i] <- V[,i]/sqrt(sum(V[,i]^2))
     
+    cat('for(i in 1:nc) ## specc
+      yi[,i] <- V[,i]/sqrt(sum(V[,i]^2)) \n yi: ', yi)
+    cat('yi[reind,]: ', yi[reind,])
     res <- kmeans(yi[reind,], centers, iterations)
     
   }
@@ -182,9 +188,14 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
       diag(km) <- 0
     
     d <- 1/sqrt(rowSums(km))
+    cat('d <- 1/sqrt(rowSums(km)) \n d: ', d)
     l <- d * km %*% diag(d)
+    cat('l <- d * km %*% diag(d) \n l: ', l)
     xi <- eigen(l)$vectors[,1:nc]
+    cat('xi <- eigen(l)$vectors[,1:nc] \n xi: ', xi)
     yi <- xi/sqrt(rowSums(xi^2))
+    cat('yi <- xi/sqrt(rowSums(xi^2)) \n yi: ', yi)
+    
     res <- kmeans(yi, centers, iterations)
   }
   
@@ -193,7 +204,7 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
   withss <- unlist(lapply(1:nc,ll<- function(l){sum((x[which(res$cluster==l),, drop=FALSE] - cent[l,])^2)}))
   names(res$cluster) <- rown
   return(new("specc", .Data=res$cluster, size = res$size, centers=cent, withinss=withss, kernelf= kernel))
- 
+  
 })
 
 setMethod("specc",signature(x="list"),function(x, centers, kernel = "stringdot", kpar = list(length=4, lambda=0.5), nystrom.red = FALSE, nystrom.sample = length(x)/6, iterations = 200, mod.sample =  0.75, na.action = na.omit, ...)
@@ -209,22 +220,22 @@ setMethod("specc",signature(x="list"),function(x, centers, kernel = "stringdot",
   }
   else
     nc <- dim(centers)[2]
-
+  
   
   if(!is(kernel,"kernel"))
-    {
-      if(is(kernel,"function")) kernel <- deparse(substitute(kernel))
-      kernel <- do.call(kernel, kpar)
-    }
+  {
+    if(is(kernel,"function")) kernel <- deparse(substitute(kernel))
+    kernel <- do.call(kernel, kpar)
+  }
   if(!is(kernel,"kernel")) stop("kernel must inherit from class `kernel'")
-
+  
   
   if (nystrom.red == TRUE){
-  
+    
     n <- nystrom.sample
     ind <- sample(1:m, m)
     x <- x[ind,]
-
+    
     tmps <- sort(ind, index.return = TRUE)
     reind <- tmps$ix
     A <- kernelMatrix(kernel, x[1:n,])
@@ -232,10 +243,10 @@ setMethod("specc",signature(x="list"),function(x, centers, kernel = "stringdot",
     d1 <- colSums(rbind(A,B))
     d2 <- rowSums(B) + drop(matrix(colSums(B),1) %*% .ginv(A)%*%t(B))
     dhat <- sqrt(1/c(d1,d2))
- 
+    
     A <- A * (dhat[1:n] %*% t(dhat[1:n]))
     B <- B * (dhat[(n+1):m] %*% t(dhat[1:n]))
-
+    
     Asi <- .sqrtm(.ginv(A))
     Q <- A + Asi %*% crossprod(B) %*% Asi
     tmpres <- svd(Q)
@@ -243,13 +254,16 @@ setMethod("specc",signature(x="list"),function(x, centers, kernel = "stringdot",
     L <- tmpres$d
     V <- rbind(A,B) %*% Asi %*% U %*% .ginv(sqrt(diag(L)))
     yi <- matrix(0,m,nc)
-
-##    for(i in 2:(nc +1))
-##      yi[,i-1] <- V[,i]/V[,1]
-
+    
+    ##    for(i in 2:(nc +1))
+    ##      yi[,i-1] <- V[,i]/V[,1]
+    
     for(i in 1:nc) ## specc
       yi[,i] <- V[,i]/sqrt(sum(V[,i]^2))
     
+    cat(' for(i in 1:nc) ## specc 
+        yi[,i] <- V[,i]/sqrt(sum(V[,i]^2)) \n yi: ', yi)
+    cat('yi[reind,]: ', yi[reind,])
     res <- kmeans(yi[reind,], centers, iterations)
     
   }
@@ -261,16 +275,20 @@ setMethod("specc",signature(x="list"),function(x, centers, kernel = "stringdot",
       diag(km) <- 0
     
     d <- 1/sqrt(rowSums(km))
+    cat('d <- 1/sqrt(rowSums(km)) \n d: ', d)
     l <- d * km %*% diag(d)
+    cat('l <- d * km %*% diag(d), l: ', l)
     xi <- eigen(l)$vectors[,1:nc]
+    cat('xi <- eigen(l)$vectors[,1:nc] \n: ', xi)
     sqxi <- rowSums(xi^2)
     if(any(sqxi==0)) stop("Zero eigenvector elements, try using a lower value for the length hyper-parameter")
     yi <- xi/sqrt(sqxi)
+    cat('yi <- xi/sqrt(sqxi) \n yi: ',yi)
     res <- kmeans(yi, centers, iterations)
   }
   
   return(new("specc", .Data=res$cluster, size = res$size, kernelf= kernel))
-
+  
 })
 
 
@@ -286,15 +304,15 @@ setMethod("specc",signature(x="kernelMatrix"),function(x, centers, nystrom.red =
   }
   else
     nc <- dim(centers)[2]
-
+  
   if(dim(x)[1]!=dim(x)[2])
-    {
-      nystrom.red <- TRUE
-      if(dim(x)[1] < dim(x)[2])
-        x <- t(x)
-      m <- nrow(x)
-      n <- ncol(x)
-    }
+  {
+    nystrom.red <- TRUE
+    if(dim(x)[1] < dim(x)[2])
+      x <- t(x)
+    m <- nrow(x)
+    n <- ncol(x)
+  }
   
   if (nystrom.red == TRUE){
     
@@ -303,66 +321,72 @@ setMethod("specc",signature(x="kernelMatrix"),function(x, centers, nystrom.red =
     d1 <- colSums(rbind(A,B))
     d2 <- rowSums(B) + drop(matrix(colSums(B),1) %*% .ginv(A)%*%t(B))
     dhat <- sqrt(1/c(d1,d2))
- 
+    
     A <- A * (dhat[1:n] %*% t(dhat[1:n]))
     B <- B * (dhat[(n+1):m] %*% t(dhat[1:n]))
-
+    
     Asi <- .sqrtm(.ginv(A))
     Q <- A + Asi %*% crossprod(B) %*% Asi
     tmpres <- svd(Q)
     U <- tmpres$u
     L <- tmpres$d
-
+    
     V <- rbind(A,B) %*% Asi %*% U %*% .ginv(sqrt(diag(L)))
     yi <- matrix(0,m,nc)
-
+    
     ## for(i in 2:(nc +1))
     ##   yi[,i-1] <- V[,i]/V[,1]
-
+    
     for(i in 1:nc) ## specc
       yi[,i] <- V[,i]/sqrt(sum(V[,i]^2))
+    cat(' for(i in 1:nc) ## specc
+      yi[,i] <- V[,i]/sqrt(sum(V[,i]^2)) \n yi: ', yi)
     
     res <- kmeans(yi, centers, iterations)
     
   }
   else{
-
+    
     d <- 1/sqrt(rowSums(x))
+    cat('d <- 1/sqrt(rowSums(x)) \n d: ', d)
     l <- d * x %*% diag(d)
+    cat('l <- d * x %*% diag(d) \n l: ', l)
     xi <- eigen(l)$vectors[,1:nc]
+    cat('xi <- eigen(l)$vectors[,1:nc] \n xi: ', xi)
     yi <- xi/sqrt(rowSums(xi^2))
+    cat('yi <- xi/sqrt(rowSums(xi^2)) \n yi:', yi)
     res <- kmeans(yi, centers, iterations)
   }
   
   ## cent <- matrix(unlist(lapply(1:nc,ll<- function(l){colMeans(x[which(res$cluster==l),])})),ncol=dim(x)[2], byrow=TRUE)
   
-##  withss <- unlist(lapply(1:nc,ll<- function(l){sum((x[which(res$cluster==l),] - cent[l,])^2)}))
+  ##  withss <- unlist(lapply(1:nc,ll<- function(l){sum((x[which(res$cluster==l),] - cent[l,])^2)}))
   
   return(new("specc", .Data=res$cluster, size = res$size, centers = matrix(0), withinss = c(0), kernelf= "Kernel Matrix used as input."))
-
+  
 })
 
 
 setMethod("show","specc",
-function(object){
- 
-  cat("Spectral Clustering object of class \"specc\"","\n")
-  cat("\n","Cluster memberships:","\n","\n")
-   cat(object@.Data,"\n","\n")
-  show(kernelf(object))
-  cat("\n")
-  if(!any(is.na(centers(object)))){
-    cat(paste("Centers: ","\n"))
-    show(centers(object))
-    cat("\n")}
-  cat(paste("Cluster size: ","\n"))
-  show(size(object))
-  cat("\n")
-  if(!is.logical(withinss(object))){
-    cat(paste("Within-cluster sum of squares: ", "\n"))
-    show(withinss(object))
-    cat("\n")}
-})
+          function(object){
+            
+            cat("Spectral Clustering object of class \"specc\"","\n")
+            cat("\n","Cluster memberships:","\n","\n")
+            cat(object@.Data,"\n","\n")
+            show(kernelf(object))
+            cat("\n")
+            if(!any(is.na(centers(object)))){
+              cat(paste("Centers: ","\n"))
+              show(centers(object))
+              cat("\n")}
+            cat(paste("Cluster size: ","\n"))
+            show(size(object))
+            cat("\n")
+            if(!is.logical(withinss(object))){
+              cat(paste("Within-cluster sum of squares: ", "\n"))
+              show(withinss(object))
+              cat("\n")}
+          })
 
 
 .ginv <- function (X, tol = sqrt(.Machine$double.eps))
@@ -383,14 +407,13 @@ function(object){
 }
 
 .sqrtm <- function(x)
-  {
-    tmpres <- eigen(x)
-    V <- t(tmpres$vectors)
-    D <- tmpres$values
-    if(is.complex(D))
-      D <- Re(D)
-    D <- pmax(D,0)
-    return(crossprod(V*sqrt(D),V))
-  }
-
+{
+  tmpres <- eigen(x)
+  V <- t(tmpres$vectors)
+  D <- tmpres$values
+  if(is.complex(D))
+    D <- Re(D)
+  D <- pmax(D,0)
+  return(crossprod(V*sqrt(D),V))
+}
 
