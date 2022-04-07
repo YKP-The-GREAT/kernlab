@@ -81,6 +81,8 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
       tmpsig <- c(2^(seq(lsmin,(Re(log2(midmin))-0.5), stepm)), rtmp, 2^(seq(Re(log2(midmax))+0.5, lsmax,step)))
       diss <- matrix(rep(Inf,length(tmpsig)*nc),ncol=nc)
       
+      cat("\n res <- kmeans(yi, centers, iterations)")
+      
       for (i in 1:length(tmpsig)){
         ka <- exp((-(ktmp^2))/(2*(tmpsig[i]^2)))
         diag(ka) <- 0
@@ -89,14 +91,20 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
         
         if(!any(d==Inf) && !any(is.na(d))&& (max(d)[1]-min(d)[1] < 10^4))
         {
+          
           l <- d * ka %*% diag(d)
           cat('l <- d * ka %*% diag(d) \n l: ', l)
           xi <- eigen(l,symmetric=TRUE)$vectors[,1:nc]
           cat(' xi <- eigen(l,symmetric=TRUE)$vectors[,1:nc] \n xi: ', xi)
           yi <- xi/sqrt(rowSums(xi^2))
           cat('yi <- xi/sqrt(rowSums(xi^2)) \n yi: ', yi)
+          cat('\n res <- kmeans(',yi,',',centers,',',iterations,')')
           res <- kmeans(yi, centers, iterations)
+          cat('\n res: ', res)
+          cat('\n diss[',i,'] <- ',res$withinss)
+          # cat('\n',diss[i,] ,'<-', res$withinss)
           diss[i,] <- res$withinss
+          cat('\n diss[i,]: ', diss[i,])
         }
       }
       
@@ -174,13 +182,15 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
     ## for(i in 2:(nc +1))
     ##   yi[,i-1] <- V[,i]/V[,1]
     
+    cat('\n res <- kmeans(yi[reind,], centers, iterations)')
+    cat('\nfor(i in 1:nc) ## specc
+      yi[,i] <- V[,i]/sqrt(sum(V[,i]^2)) \n yi: ', yi)
     for(i in 1:nc) ## specc
       yi[,i] <- V[,i]/sqrt(sum(V[,i]^2))
-    
-    cat('for(i in 1:nc) ## specc
-      yi[,i] <- V[,i]/sqrt(sum(V[,i]^2)) \n yi: ', yi)
-    cat('yi[reind,]: ', yi[reind,])
+    cat('\nyi[reind,]: ', yi[reind,])
+    cat('\nres <- kmeans(',yi[reind,],',', centers,',', iterations,')')
     res <- kmeans(yi[reind,], centers, iterations)
+    cat('\n res: ',res)
     
   }
   else{
@@ -188,13 +198,13 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
       diag(km) <- 0
     
     d <- 1/sqrt(rowSums(km))
-    cat('d <- 1/sqrt(rowSums(km)) \n d: ', d)
+    cat('\nd <- 1/sqrt(rowSums(km)) \n d: ', d)
     l <- d * km %*% diag(d)
-    cat('l <- d * km %*% diag(d) \n l: ', l)
+    cat('\nl <- d * km %*% diag(d) \n l: ', l)
     xi <- eigen(l)$vectors[,1:nc]
-    cat('xi <- eigen(l)$vectors[,1:nc] \n xi: ', xi)
+    cat('\nxi <- eigen(l)$vectors[,1:nc] \n xi: ', xi)
     yi <- xi/sqrt(rowSums(xi^2))
-    cat('yi <- xi/sqrt(rowSums(xi^2)) \n yi: ', yi)
+    cat('\nyi <- xi/sqrt(rowSums(xi^2)) \n yi: ', yi)
     
     res <- kmeans(yi, centers, iterations)
   }
@@ -261,9 +271,9 @@ setMethod("specc",signature(x="list"),function(x, centers, kernel = "stringdot",
     for(i in 1:nc) ## specc
       yi[,i] <- V[,i]/sqrt(sum(V[,i]^2))
     
-    cat(' for(i in 1:nc) ## specc 
+    cat('\n for(i in 1:nc) ## specc 
         yi[,i] <- V[,i]/sqrt(sum(V[,i]^2)) \n yi: ', yi)
-    cat('yi[reind,]: ', yi[reind,])
+    cat('\nyi[reind,]: ', yi[reind,])
     res <- kmeans(yi[reind,], centers, iterations)
     
   }
@@ -275,15 +285,15 @@ setMethod("specc",signature(x="list"),function(x, centers, kernel = "stringdot",
       diag(km) <- 0
     
     d <- 1/sqrt(rowSums(km))
-    cat('d <- 1/sqrt(rowSums(km)) \n d: ', d)
+    cat('\nd <- 1/sqrt(rowSums(km)) \n d: ', d)
     l <- d * km %*% diag(d)
-    cat('l <- d * km %*% diag(d), l: ', l)
+    cat('\nl <- d * km %*% diag(d), l: ', l)
     xi <- eigen(l)$vectors[,1:nc]
-    cat('xi <- eigen(l)$vectors[,1:nc] \n: ', xi)
+    cat('\nxi <- eigen(l)$vectors[,1:nc] \n: ', xi)
     sqxi <- rowSums(xi^2)
     if(any(sqxi==0)) stop("Zero eigenvector elements, try using a lower value for the length hyper-parameter")
     yi <- xi/sqrt(sqxi)
-    cat('yi <- xi/sqrt(sqxi) \n yi: ',yi)
+    cat('\nyi <- xi/sqrt(sqxi) \n yi: ',yi)
     res <- kmeans(yi, centers, iterations)
   }
   
@@ -339,7 +349,7 @@ setMethod("specc",signature(x="kernelMatrix"),function(x, centers, nystrom.red =
     
     for(i in 1:nc) ## specc
       yi[,i] <- V[,i]/sqrt(sum(V[,i]^2))
-    cat(' for(i in 1:nc) ## specc
+    cat(' \nfor(i in 1:nc) ## specc
       yi[,i] <- V[,i]/sqrt(sum(V[,i]^2)) \n yi: ', yi)
     
     res <- kmeans(yi, centers, iterations)
@@ -348,13 +358,13 @@ setMethod("specc",signature(x="kernelMatrix"),function(x, centers, nystrom.red =
   else{
     
     d <- 1/sqrt(rowSums(x))
-    cat('d <- 1/sqrt(rowSums(x)) \n d: ', d)
+    cat('\nd <- 1/sqrt(rowSums(x)) \n d: ', d)
     l <- d * x %*% diag(d)
-    cat('l <- d * x %*% diag(d) \n l: ', l)
+    cat('\nl <- d * x %*% diag(d) \n l: ', l)
     xi <- eigen(l)$vectors[,1:nc]
-    cat('xi <- eigen(l)$vectors[,1:nc] \n xi: ', xi)
+    cat('\nxi <- eigen(l)$vectors[,1:nc] \n xi: ', xi)
     yi <- xi/sqrt(rowSums(xi^2))
-    cat('yi <- xi/sqrt(rowSums(xi^2)) \n yi:', yi)
+    cat('\nyi <- xi/sqrt(rowSums(xi^2)) \n yi:', yi)
     res <- kmeans(yi, centers, iterations)
   }
   
