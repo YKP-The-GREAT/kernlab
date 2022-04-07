@@ -414,6 +414,7 @@ setMethod("show","specc",
   if(is.complex(D))
     D <- Re(D)
   D <- pmax(D,0)
+  cat("Hello there!")
   return(crossprod(V*sqrt(D),V))
 }
 
