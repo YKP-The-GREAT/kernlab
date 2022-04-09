@@ -114,7 +114,7 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
         
         else
         {
-          cat('\ny[',i,']: ', yi)
+          # cat('\ny[',i,']: ', yi)
           cat(typeof(yi),'\n')
           cat(class(yi),'\n')
           cat(dim(yi),'\n')
@@ -298,7 +298,7 @@ setMethod("specc",signature(x="list"),function(x, centers, kernel = "stringdot",
     #     yi[,i] <- V[,i]/sqrt(sum(V[,i]^2)) \n yi: ', yi)
     # cat('\nyi[reind,]: ', yi[reind,])
     cat('\nres <- kmeans(yi[reind,], centers, iterations)')
-    cat('\ny[',i,']: ', yi)
+    cat('\ny[',i,']: ', yi[reind,])
     cat(typeof(yi),'\n')
     cat(class(yi),'\n')
     cat(dim(yi),'\n')
