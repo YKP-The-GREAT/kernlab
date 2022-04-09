@@ -81,7 +81,7 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
       tmpsig <- c(2^(seq(lsmin,(Re(log2(midmin))-0.5), stepm)), rtmp, 2^(seq(Re(log2(midmax))+0.5, lsmax,step)))
       diss <- matrix(rep(Inf,length(tmpsig)*nc),ncol=nc)
       
-      # cat("\n res <- kmeans(yi, centers, iterations)")
+      cat("\n res <- kmeans(yi, centers, iterations)")
       
       for (i in 1:length(tmpsig)){
         ka <- exp((-(ktmp^2))/(2*(tmpsig[i]^2)))
@@ -91,6 +91,7 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
         
         if(!any(d==Inf) && !any(is.na(d))&& (max(d)[1]-min(d)[1] < 10^4))
         {
+          cat("\n res <- kmeans(yi, centers, iterations)")
           
           l <- d * ka %*% diag(d)
           # cat('l <- d * ka %*% diag(d) \n l: ', l)
@@ -110,7 +111,16 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
           diss[i,] <- res$withinss
           # cat('\n diss[i,]: ', diss[i,])
         }
+        
+        else
+        {
+          cat('\ny[',i,']: ', yi)
+          cat(typeof(yi),'\n')
+          cat(class(yi),'\n')
+          cat(dim(yi),'\n')
+        }
       }
+      
       
       ms <- which.min(rowSums(diss))
       kernel <- rbfdot((tmpsig[ms]^(-2))/2)
@@ -186,17 +196,18 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
     ## for(i in 2:(nc +1))
     ##   yi[,i-1] <- V[,i]/V[,1]
     
-    # cat('\n res <- kmeans(yi[reind,], centers, iterations)')
+    cat('\n res <- kmeans(yi[reind,], centers, iterations)')
     # cat('\nfor(i in 1:nc) ## specc
       # yi[,i] <- V[,i]/sqrt(sum(V[,i]^2)) \n yi: ', yi)
     for(i in 1:nc) ## specc
       yi[,i] <- V[,i]/sqrt(sum(V[,i]^2))
     # cat('\nyi[reind,]: ', yi[reind,])
     # cat('\nres <- kmeans(',yi[reind,],',', centers,',', iterations,')')
+    cat('\n res <- kmeans(yi[reind,], centers, iterations)')
     cat('\ny[',i,']: ', yi)
     cat(typeof(yi),'\n')
     cat(class(yi),'\n')
-    cat(dim(yi),'\n')
+    cat(dim(yi),'\n') 
     res <- kmeans(yi[reind,], centers, iterations)
     # cat('\n res: ',res)
     
@@ -213,6 +224,7 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
     # cat('\nxi <- eigen(l)$vectors[,1:nc] \n xi: ', xi)
     yi <- xi/sqrt(rowSums(xi^2))
     # cat('\nyi <- xi/sqrt(rowSums(xi^2)) \n yi: ', yi)
+    cat('\nres <- kmeans(yi, centers, iterations)')
     cat('\ny[',i,']: ', yi)
     cat(typeof(yi),'\n')
     cat(class(yi),'\n')
@@ -285,6 +297,7 @@ setMethod("specc",signature(x="list"),function(x, centers, kernel = "stringdot",
     # cat('\n for(i in 1:nc) ## specc 
     #     yi[,i] <- V[,i]/sqrt(sum(V[,i]^2)) \n yi: ', yi)
     # cat('\nyi[reind,]: ', yi[reind,])
+    cat('\nres <- kmeans(yi[reind,], centers, iterations)')
     cat('\ny[',i,']: ', yi)
     cat(typeof(yi),'\n')
     cat(class(yi),'\n')
@@ -309,6 +322,7 @@ setMethod("specc",signature(x="list"),function(x, centers, kernel = "stringdot",
     if(any(sqxi==0)) stop("Zero eigenvector elements, try using a lower value for the length hyper-parameter")
     yi <- xi/sqrt(sqxi)
     # cat('\nyi <- xi/sqrt(sqxi) \n yi: ',yi)
+    cat('\nres <- kmeans(yi, centers, iterations)')
     cat('\ny[',i,']: ', yi)
     cat(typeof(yi),'\n')
     cat(class(yi),'\n')
@@ -370,7 +384,7 @@ setMethod("specc",signature(x="kernelMatrix"),function(x, centers, nystrom.red =
       yi[,i] <- V[,i]/sqrt(sum(V[,i]^2))
     # cat(' \nfor(i in 1:nc) ## specc
     #   yi[,i] <- V[,i]/sqrt(sum(V[,i]^2)) \n yi: ', yi)
-    
+    cat('\nres <- kmeans(yi, centers, iterations)')
     cat('\ny[',i,']: ', yi)
     cat(typeof(yi),'\n')
     cat(class(yi),'\n')
@@ -388,6 +402,7 @@ setMethod("specc",signature(x="kernelMatrix"),function(x, centers, nystrom.red =
     # cat('\nxi <- eigen(l)$vectors[,1:nc] \n xi: ', xi)
     yi <- xi/sqrt(rowSums(xi^2))
     # cat('\nyi <- xi/sqrt(rowSums(xi^2)) \n yi:', yi)
+    cat('\nres <- kmeans(yi, centers, iterations)')
     cat('\ny[',i,']: ', yi)
     cat(typeof(yi),'\n')
     cat(class(yi),'\n')
