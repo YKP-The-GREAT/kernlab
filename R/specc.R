@@ -84,6 +84,7 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
       cat("\n res <- kmeans(yi, centers, iterations)")
       
       for (i in 1:length(tmpsig)){
+        cat('\n[',i,']: ', i)
         ka <- exp((-(ktmp^2))/(2*(tmpsig[i]^2)))
         diag(ka) <- 0
         
@@ -115,9 +116,10 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
         else
         {
           # cat('\ny[',i,']: ', yi)
-          cat(typeof(yi),'\n')
-          cat(class(yi),'\n')
-          cat(dim(yi),'\n')
+          # cat('\ny[',i,']: ', yi)
+          # cat(typeof(yi),'\n')
+          # cat(class(yi),'\n')
+          # cat(dim(yi),'\n')
         }
       }
       
