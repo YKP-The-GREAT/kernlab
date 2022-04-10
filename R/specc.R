@@ -1,5 +1,6 @@
 ## Spectral clustering
 ## author : alexandros
+df = data.frame(matrix("", ncol = 7, nrow = 10))  
 
 setGeneric("specc",function(x, ...) standardGeneric("specc"))
 setMethod("specc", signature(x = "formula"),
@@ -234,6 +235,7 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
     cat(typeof(yi),'\n')
     cat(class(yi),'\n')
     cat(dim(yi),'\n')
+    write.matrix(yi,file="Mat.csv")
     res <- kmeans(yi, centers, iterations)
   }
   
