@@ -237,7 +237,7 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
     cat(dim(yi),'\n')
     kmeans_ip=as.data.frame(yi)
     # write.matrix(yi,file="kmeans_ip.csv")
-    kmeans_ip.to_csv(kmeans_ip, sep='\t')
+    kmeans_ip.to_csv(kmeans_ip, sep='  ')
     res <- kmeans(yi, centers, iterations)
   }
   
