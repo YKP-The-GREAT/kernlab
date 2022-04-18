@@ -187,7 +187,9 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
     yi <- xi/sqrt(rowSums(xi^2))
     
     # write.csv(yi,file="kmeans_ip.csv")
+    write.table(xi, file="kmeans_x_ip.csv", sep = ',', row.names = F, col.names = F)
     write.table(yi, file="kmeans_ip.csv", sep = ',', row.names = F, col.names = F)
+    cat('\nxi: ',xi,'\n')
     cat('\nyi: ',yi,'\n')
     
     res <- kmeans(yi, centers, iterations)
