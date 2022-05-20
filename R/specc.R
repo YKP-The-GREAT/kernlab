@@ -98,13 +98,13 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
           cat("\nA: res <- kmeans(yi, centers, iterations)")
           
           l <- d * ka %*% diag(d)
-          cat('\nl: ',l,'\n')
+          # cat('\nl: ',l,'\n')
           write.table(l, file="kmeans_l_ip.csv", sep = ',', row.names = F, col.names = F)
           
           # cat('l <- d * ka %*% diag(d) \n l: ', l)
           xi <- eigen(l,symmetric=TRUE)$vectors[,1:nc]
           # cat(' xi <- eigen(l,symmetric=TRUE)$vectors[,1:nc] \n xi: ', xi)
-          cat('\nxi: ',xi,'\n')
+          # cat('\nxi: ',xi,'\n')
           write.table(xi, file="kmeans_x_ip.csv", sep = ',', row.names = F, col.names = F)
           
           yi <- xi/sqrt(rowSums(xi^2))
@@ -113,8 +113,8 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
           # cat(typeof(yi),'\n')
           # cat(class(yi),'\n')
           # cat(dim(yi),'\n')
-          cat('\ny[',i,']: ', yi[,1],'\n')
-          cat('\ny[',i,']: ', yi[,2],'\n')
+          # cat('\ny[',i,']: ', yi[,1],'\n')
+          # cat('\ny[',i,']: ', yi[,2],'\n')
           write.table(yi, file="kmeans_ip.csv", sep = ',', row.names = F, col.names = F)
           
           
@@ -230,7 +230,7 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
     # cat(typeof(yi),'\n')
     # cat(class(yi),'\n')
     # cat(dim(yi),'\n') 
-    cat('\nyi: ',yi,'\n')
+    # cat('\nyi: ',yi,'\n')
     write.table(yi, file="kmeans_ip.csv", sep = ',', row.names = F, col.names = F)
     res <- kmeans(yi[reind,], centers, iterations)
     # cat('\n res: ',res)s
@@ -245,12 +245,12 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
 
     l <- d * km %*% diag(d)
     # cat('\nl <- d * km %*% diag(d) \n l: ', l)
-    cat('\nl: ',l,'\n')
+    # cat('\nl: ',l,'\n')
     write.table(l, file="kmeans_l_ip.csv", sep = ',', row.names = F, col.names = F)
     
     xi <- eigen(l)$vectors[,1:nc]
     # cat('\nxi <- eigen(l)$vectors[,1:nc] \n xi: ', xi)
-    cat('\nxi: ',xi,'\n')
+    # cat('\nxi: ',xi,'\n')
     write.table(xi, file="kmeans_x_ip.csv", sep = ',', row.names = F, col.names = F)
     
     yi <- xi/sqrt(rowSums(xi^2))
@@ -263,7 +263,7 @@ setMethod("specc",signature(x="matrix"),function(x, centers, kernel = "rbfdot", 
     # cat(dim(yi),'\n')
     # kmeans_ip=as.data.frame(yi)
     # cat('\nyi: ',yi,'\n')
-    cat('\nyi: ',yi,'\n')
+    # cat('\nyi: ',yi,'\n')
     write.table(yi, file="kmeans_ip.csv", sep = ',', row.names = F, col.names = F)
     
     res <- kmeans(yi, centers, iterations)
@@ -335,7 +335,7 @@ setMethod("specc",signature(x="list"),function(x, centers, kernel = "stringdot",
     #     yi[,i] <- V[,i]/sqrt(sum(V[,i]^2)) \n yi: ', yi)
     # cat('\nyi[reind,]: ', yi[reind,])
     cat('\nD: res <- kmeans(yi[reind,], centers, iterations)')
-    cat('\ny[',i,']: ', yi[reind,],'\n')
+    # cat('\ny[',i,']: ', yi[reind,],'\n')
     # cat(typeof(yi),'\n')
     # cat(class(yi),'\n')
     # cat(dim(yi),'\n')
@@ -355,12 +355,12 @@ setMethod("specc",signature(x="list"),function(x, centers, kernel = "stringdot",
     d <- 1/sqrt(rowSums(km))
     # cat('\nd <- 1/sqrt(rowSums(km)) \n d: ', d)
     l <- d * km %*% diag(d)
-    cat('\nl: ',l,'\n')
+    # cat('\nl: ',l,'\n')
     write.table(l, file="kmeans_l_ip.csv", sep = ',', row.names = F, col.names = F)
     
     # cat('\nl <- d * km %*% diag(d), l: ', l)
     xi <- eigen(l)$vectors[,1:nc]
-    cat('\nxi: ',xi,'\n')
+    # cat('\nxi: ',xi,'\n')
     write.table(xi, file="kmeans_x_ip.csv", sep = ',', row.names = F, col.names = F)
     
     # cat('\nxi <- eigen(l)$vectors[,1:nc] \n: ', xi)
@@ -369,7 +369,7 @@ setMethod("specc",signature(x="list"),function(x, centers, kernel = "stringdot",
     yi <- xi/sqrt(sqxi)
     # cat('\nyi <- xi/sqrt(sqxi) \n yi: ',yi)
     cat('\nE: res <- kmeans(yi, centers, iterations)')
-    cat('\ny[',i,']: ', yi,'\n')
+    # cat('\ny[',i,']: ', yi,'\n')
     write.table(yi, file="kmeans_ip.csv", sep = ',', row.names = F, col.names = F)
     
     # cat(typeof(yi),'\n')
@@ -433,7 +433,7 @@ setMethod("specc",signature(x="kernelMatrix"),function(x, centers, nystrom.red =
     # cat(' \nfor(i in 1:nc) ## specc
     #   yi[,i] <- V[,i]/sqrt(sum(V[,i]^2)) \n yi: ', yi)
     cat('\nF: res <- kmeans(yi, centers, iterations)')
-    cat('\ny[',i,']: ', yi)
+    # cat('\ny[',i,']: ', yi)
     write.table(yi, file="kmeans_ip.csv", sep = ',', row.names = F, col.names = F)
     
     # cat(typeof(yi),'\n')
@@ -447,12 +447,12 @@ setMethod("specc",signature(x="kernelMatrix"),function(x, centers, nystrom.red =
     d <- 1/sqrt(rowSums(x))
     # cat('\nd <- 1/sqrt(rowSums(x)) \n d: ', d)
     l <- d * x %*% diag(d)
-    cat('\nl: ',l,'\n')
+    # cat('\nl: ',l,'\n')
     write.table(l, file="kmeans_l_ip.csv", sep = ',', row.names = F, col.names = F)
     
     # cat('\nl <- d * x %*% diag(d) \n l: ', l)
     xi <- eigen(l)$vectors[,1:nc]
-    cat('\nxi: ',xi,'\n')
+    # cat('\nxi: ',xi,'\n')
     write.table(xi, file="kmeans_x_ip.csv", sep = ',', row.names = F, col.names = F)
     
     # cat('\nxi <- eigen(l)$vectors[,1:nc] \n xi: ', xi)
@@ -460,7 +460,7 @@ setMethod("specc",signature(x="kernelMatrix"),function(x, centers, nystrom.red =
     # cat('\nyi <- xi/sqrt(rowSums(xi^2)) \n yi:', yi)
     
     cat('\nG: res <- kmeans(yi, centers, iterations)')
-    cat('\ny[',i,']: ', yi)
+    # cat('\ny[',i,']: ', yi)
     
     write.table(yi, file="kmeans_ip.csv", sep = ',', row.names = F, col.names = F)
     # 
